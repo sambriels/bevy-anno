@@ -1,15 +1,17 @@
-use crate::prelude::*;
+use crate::{components::GameState, prelude::*};
+use bevy::render::texture::ImageSettings;
 pub struct LoadingPlugin;
 
 impl Plugin for LoadingPlugin {
     fn build(&self, app: &mut App) {
         app.add_loading_state(
             LoadingState::new(GameState::AssetLoading)
-                .continue_to_state(GameState::Playing)
+                .continue_to_state(GameState::WorldBuilding)
                 .with_collection::<FontAssets>()
                 .with_collection::<TextureAssets>(),
         )
-        .add_state(GameState::AssetLoading);
+        .insert_resource(ImageSettings::default_nearest());
+        // .add_state(GameState::AssetLoading);
     }
 }
 

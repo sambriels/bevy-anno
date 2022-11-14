@@ -238,6 +238,7 @@ dependencies = [
  "bevy_asset_loader",
  "bevy_ecs_tilemap",
  "iyes_loopless",
+ "iyes_progress",
  "rand",
 ]
 
@@ -335,6 +336,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_asset_loader_derive",
+ "iyes_loopless",
 ]
 
 [[package]]
@@ -2017,6 +2019,16 @@ dependencies = [
  "bevy_ecs",
  "bevy_time",
  "bevy_utils",
+]
+
+[[package]]
+name = "iyes_progress"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9eaeccd2b11ae5271bf1fe04c94915b61cb1697fbba97dd313f5844381c57c38"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
 ]
 
 [[package]]

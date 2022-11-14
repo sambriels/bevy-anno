@@ -22,5 +22,6 @@ bevy = { version = "=0.8.1" }
 bevy-inspector-egui = "=0.13.0"
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }
 rand = "=0.8.5"
-bevy_asset_loader = { version = "0.13" }
+bevy_asset_loader = { version = "0.13", features = ["stageless"] }
 iyes_loopless = "=0.8.0"
+iyes_progress = "=0.6.0"
