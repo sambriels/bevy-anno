@@ -11,7 +11,6 @@ impl Plugin for LoadingPlugin {
                 .with_collection::<TextureAssets>(),
         )
         .insert_resource(ImageSettings::default_nearest());
-        // .add_state(GameState::AssetLoading);
     }
 }
 

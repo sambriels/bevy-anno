@@ -25,3 +25,4 @@ rand = "=0.8.5"
 bevy_asset_loader = { version = "0.13", features = ["stageless"] }
 iyes_loopless = "=0.8.0"
 iyes_progress = "=0.6.0"
+pathfinding = "3.0.14"

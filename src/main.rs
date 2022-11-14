@@ -1,6 +1,7 @@
 mod camera;
 mod components;
 mod loading;
+mod pathfinding;
 mod worker;
 mod world;
 // #[cfg(debug_assertions)]
@@ -26,6 +27,7 @@ fn main() {
         .add_plugin(loading::LoadingPlugin)
         .add_plugin(camera::CameraPlugin)
         .add_plugin(world::WorldPlugin)
+        .add_plugin(pathfinding::PathfindingPlugin)
         .add_plugin(worker::WorkerPlugin)
         .run();
 
