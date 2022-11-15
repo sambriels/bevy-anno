@@ -1,9 +1,9 @@
 use crate::{
-    components::{CursorPos, GameState, MyTile},
+    components::{CursorPos, GameState},
     prelude::*,
+    utils::mouse_pos_in_map,
 };
-use bevy::math::Vec4Swizzles;
-use bevy_ecs_tilemap::prelude::{get_tile_neighbors, *};
+use bevy_ecs_tilemap::prelude::*;
 use pathfinding::prelude::astar;
 
 pub struct PathfindingPlugin;
@@ -20,53 +20,85 @@ struct Pos(i32, i32);
 pub fn find_path(
     mouse_input: Res<Input<MouseButton>>,
     tilemap_query: Query<(
-        &TileStorage,
         &TilemapSize,
         &TilemapGridSize,
-        &TilemapType,
         &Transform,
+        &TilemapType,
+        &TilemapTileSize,
     )>,
     cursor_pos: Res<CursorPos>,
+    lines: ResMut<DebugLines>,
 ) {
     if mouse_input.just_pressed(MouseButton::Left) {
-        let (tile_storage, map_size, grid_size, map_type, map_transform) = tilemap_query.single();
-        // We need to make sure that the cursor's world position is correct relative to the map
-        // due to any map transformation.
-        let cursor_in_map_pos: Vec2 = {
-            // Extend the cursor_pos vec3 by 1.0
-            let cursor_pos = Vec4::from((cursor_pos.0, 1.0));
-            let cursor_in_map_pos = map_transform.compute_matrix().inverse() * cursor_pos;
-            cursor_in_map_pos.xy()
-        };
+        let (map_size, grid_size, map_transform, tilemap_type, tile_size) = tilemap_query.single();
+
+        let mouse_pos = mouse_pos_in_map(cursor_pos, map_transform);
         if let Some(tile_pos) =
-            TilePos::from_world_pos(&cursor_in_map_pos, map_size, grid_size, map_type)
+            TilePos::from_world_pos(&mouse_pos, map_size, grid_size, tilemap_type)
         {
-            // Highlight the relevant tile's label
-            if let Some(tile_entity) = tile_storage.get(&tile_pos) {
-                println!("Clicked on tile: {:?}, {:?}", tile_entity, tile_pos);
-                if let Ok(name) = tilemap_query.get(tile_entity) {
-                    println!("Tile name: {:?}", name);
-                }
-                static GOAL: UVec2 = UVec2::new(4, 6);
-                let result = astar(
-                    &UVec2::new(tile_pos.x, tile_pos.y),
-                    |p| {
-                        get_neighboring_pos(&TilePos::from(*p), map_size, map_type)
-                            .into_iter()
-                            .map(|a| (UVec2::from(a), 1))
-                    },
-                    |p| p.as_vec2().distance(GOAL.as_vec2()) as i32,
-                    |p| *p == GOAL,
-                );
-                // assert_eq!(result.expect("no path found").1, 4);
-                println!("Result: {:?}", result);
-                // if let Ok(mut tile_text) = tile_label_q.get_mut(tile_entity) {
-                //     for mut section in tile_text.sections.iter_mut() {
-                //         section.style.color = Color::RED;
-                //     }
-                //     commands.entity(tile_entity).insert(HighlightedLabel);
-                // }
-            };
+            let goal = TilePos { x: 4, y: 6 };
+            let result = find_path_in_tilemap(&tile_pos, &goal, map_size, tilemap_type);
+
+            if let Some((path, _)) = result {
+                show_path_debug(path, grid_size, tilemap_type, map_size, tile_size, lines)
+            }
+            // if let Ok(mut tile_text) = tile_label_q.get_mut(tile_entity) {
+            //     for mut section in tile_text.sections.iter_mut() {
+            //         section.style.color = Color::RED;
+            //     }
+            //     commands.entity(tile_entity).insert(HighlightedLabel);
+            // }
+        };
+    }
+}
+
+pub fn find_path_in_tilemap(
+    from: &TilePos,
+    to: &TilePos,
+    map_size: &TilemapSize,
+    tilemap_type: &TilemapType,
+) -> Option<(Vec<TilePos>, i32)> {
+    astar(
+        from,
+        |p| {
+            get_neighboring_pos(p, map_size, tilemap_type)
+                .into_iter()
+                .map(|a| (a, 1))
+        },
+        |p| Vec2::from(p).distance(to.into()) as i32,
+        |p| p == to,
+    )
+}
+
+pub fn show_path_debug(
+    points: Vec<TilePos>,
+    grid_size: &TilemapGridSize,
+    map_type: &TilemapType,
+    map_size: &TilemapSize,
+    tile_size: &TilemapTileSize,
+    mut lines: ResMut<DebugLines>,
+) {
+    let half_grid_offset = Vec2::new(
+        map_size.x as f32 * tile_size.x / 2.0,
+        map_size.y as f32 * tile_size.y / 2.0,
+    );
+    for (i, pos) in points.iter().enumerate() {
+        if i > 0 {
+            let prev_pos = points[i - 1];
+            let start = TilePos::center_in_world(
+                &TilePos::new(prev_pos.x, prev_pos.y),
+                grid_size,
+                map_type,
+            ) - half_grid_offset;
+            let end = TilePos::center_in_world(&TilePos::new(pos.x, pos.y), grid_size, map_type)
+                - half_grid_offset;
+
+            lines.line_colored(
+                Vec3::new(start.x, start.y, 1.1),
+                Vec3::new(end.x, end.y, 1.1),
+                20.0,
+                Color::RED,
+            );
         }
     }
 }

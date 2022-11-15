@@ -103,7 +103,7 @@ pub fn on_mouse_click(
         {
             // Highlight the relevant tile's label
             if let Some(tile_entity) = tile_storage.get(&tile_pos) {
-                // println!("Clicked on tile: {:?}, {:?}", tile_entity, tile_pos);
+                println!("Clicked on tile: {:?}, {:?}", tile_entity, tile_pos);
                 // if let Ok(mut tile_text) = tile_label_q.get_mut(tile_entity) {
                 //     for mut section in tile_text.sections.iter_mut() {
                 //         section.style.color = Color::RED;

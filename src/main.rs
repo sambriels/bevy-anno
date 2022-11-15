@@ -2,6 +2,7 @@ mod camera;
 mod components;
 mod loading;
 mod pathfinding;
+mod utils;
 mod worker;
 mod world;
 // #[cfg(debug_assertions)]
@@ -11,6 +12,7 @@ mod prelude {
     pub use bevy::prelude::*;
     pub use bevy_asset_loader::prelude::*;
     pub use bevy_ecs_tilemap::prelude::*;
+    pub use bevy_prototype_debug_lines::*;
     pub use iyes_loopless::prelude::*;
     pub use iyes_progress::prelude::*;
     pub use rand::prelude::*;
@@ -23,6 +25,7 @@ fn main() {
     App::new()
         .add_loopless_state(components::GameState::AssetLoading)
         .add_plugins(DefaultPlugins)
+        .add_plugin(DebugLinesPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(loading::LoadingPlugin)
         .add_plugin(camera::CameraPlugin)

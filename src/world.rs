@@ -2,6 +2,9 @@ use crate::{components::*, loading::TextureAssets, prelude::*};
 use bevy_ecs_tilemap::prelude::*;
 pub struct WorldPlugin;
 
+pub const WORLD_SIZE_WIDTH: u32 = 12;
+pub const WORLD_SIZE_HEIGHT: u32 = 12;
+
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(TilemapPlugin)
@@ -12,7 +15,10 @@ impl Plugin for WorldPlugin {
 
 pub fn generate(mut commands: Commands, texture_assets: Res<TextureAssets>) {
     commands.spawn_bundle(Camera2dBundle::default());
-    let tilemap_size = TilemapSize { x: 12, y: 12 };
+    let tilemap_size = TilemapSize {
+        x: WORLD_SIZE_WIDTH,
+        y: WORLD_SIZE_HEIGHT,
+    };
 
     let tilemap_entity = commands.spawn().id();
 
