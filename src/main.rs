@@ -40,13 +40,3 @@ fn main() {
     //         .add_plugin(LogDiagnosticsPlugin::default());
     // }
 }
-
-// fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-//     let sprite_handle = asset_server.load("workman.png");
-
-//     commands.spawn_bundle(SpriteBundle {
-//         texture: sprite_handle,
-//         transform: Transform::from_xyz(0.0, 0.0, 1.0),
-//         ..default()
-//     });
-// }

@@ -152,7 +152,6 @@ pub fn update_cursor_pos(
                 cam_t,
                 cam,
             ));
-            // println!("Cursor pos: {}, {}", cursor_pos.0.x, cursor_pos.0.y);
         }
     }
 }

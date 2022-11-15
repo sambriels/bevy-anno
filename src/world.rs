@@ -8,10 +8,13 @@ pub const WORLD_SIZE_HEIGHT: u32 = 12;
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(TilemapPlugin)
-            .register_type::<MyTile>()
+            .register_type::<MovementCost>()
             .add_enter_system(GameState::WorldBuilding, generate);
     }
 }
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct MovementCost(pub i32);
 
 pub fn generate(mut commands: Commands, texture_assets: Res<TextureAssets>) {
     commands.spawn_bundle(Camera2dBundle::default());
@@ -29,7 +32,6 @@ pub fn generate(mut commands: Commands, texture_assets: Res<TextureAssets>) {
         for y in 0..tilemap_size.y {
             let tile_pos = TilePos { x, y };
             let is_walkable = rng.gen_bool(0.8);
-            let tile = MyTile { is_walkable };
             let texture_index = if is_walkable { 4 } else { 2 };
             let tile_entity = commands
                 .spawn()
@@ -39,7 +41,7 @@ pub fn generate(mut commands: Commands, texture_assets: Res<TextureAssets>) {
                     texture_index: TileTextureIndex(texture_index),
                     ..Default::default()
                 })
-                .insert(tile)
+                .insert(MovementCost(if is_walkable { 0 } else { 999 }))
                 .insert(Name::new("Tile"))
                 .id();
             tile_storage.set(&tile_pos, tile_entity);
