@@ -4,6 +4,7 @@ mod cursor;
 mod loading;
 mod pathfinding;
 mod terrain;
+mod unit;
 mod worker;
 // #[cfg(debug_assertions)]
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -29,6 +30,7 @@ fn main() {
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(loading::LoadingPlugin)
         .add_plugin(cursor::CursorPlugin)
+        .add_plugin(unit::UnitPlugin)
         .add_plugin(camera::CameraPlugin)
         .add_plugin(terrain::TerrainPlugin)
         .add_plugin(pathfinding::PathfindingPlugin)
