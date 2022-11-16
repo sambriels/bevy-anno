@@ -1,24 +1,16 @@
-use crate::{
-    components::{CursorPos, GameState},
-    prelude::*,
-};
-use bevy::{input::mouse::MouseWheel, math::Vec4Swizzles};
+use crate::{components::GameState, prelude::*};
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(CursorPos(Vec3::ZERO))
-            .add_system(movement.run_in_state(GameState::Playing))
-            .add_system(on_mouse_click.run_in_state(GameState::Playing))
-            .add_system(update_cursor_pos.run_in_state(GameState::Playing));
+        app.add_system(movement.run_in_state(GameState::Playing));
     }
 }
 
 // A simple camera system for moving and zooming the camera.
-pub fn movement(
+fn movement(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
-    mut scroll_evr: EventReader<MouseWheel>,
     mut query: Query<(&mut Transform, &mut OrthographicProjection), With<Camera>>,
 ) {
     for (mut transform, mut ortho) in query.iter_mut() {
@@ -57,101 +49,5 @@ pub fn movement(
         // Important! We need to restore the Z values when moving the camera around.
         // Bevy has a specific camera setup and this can mess with how our layers are shown.
         transform.translation.z = z;
-    }
-    use bevy::input::mouse::MouseScrollUnit;
-    for ev in scroll_evr.iter() {
-        match ev.unit {
-            MouseScrollUnit::Line => {
-                println!(
-                    "Scroll (line units): vertical: {}, horizontal: {}",
-                    ev.y, ev.x
-                );
-            }
-            MouseScrollUnit::Pixel => {
-                println!(
-                    "Scroll (pixel units): vertical: {}, horizontal: {}",
-                    ev.y, ev.x
-                );
-            }
-        }
-    }
-}
-
-pub fn on_mouse_click(
-    mouse_input: Res<Input<MouseButton>>,
-    tilemap_query: Query<(
-        &TileStorage,
-        &TilemapSize,
-        &TilemapGridSize,
-        &TilemapType,
-        &Transform,
-    )>,
-    cursor_pos: Res<CursorPos>,
-) {
-    if mouse_input.just_pressed(MouseButton::Left) {
-        let (tile_storage, map_size, grid_size, map_type, map_transform) = tilemap_query.single();
-        // We need to make sure that the cursor's world position is correct relative to the map
-        // due to any map transformation.
-        let cursor_in_map_pos: Vec2 = {
-            // Extend the cursor_pos vec3 by 1.0
-            let cursor_pos = Vec4::from((cursor_pos.0, 1.0));
-            let cursor_in_map_pos = map_transform.compute_matrix().inverse() * cursor_pos;
-            cursor_in_map_pos.xy()
-        };
-        if let Some(tile_pos) =
-            TilePos::from_world_pos(&cursor_in_map_pos, map_size, grid_size, map_type)
-        {
-            // Highlight the relevant tile's label
-            if let Some(tile_entity) = tile_storage.get(&tile_pos) {
-                println!("Clicked on tile: {:?}, {:?}", tile_entity, tile_pos);
-                // if let Ok(mut tile_text) = tile_label_q.get_mut(tile_entity) {
-                //     for mut section in tile_text.sections.iter_mut() {
-                //         section.style.color = Color::RED;
-                //     }
-                //     commands.entity(tile_entity).insert(HighlightedLabel);
-                // }
-            }
-        }
-    }
-}
-
-// Converts the cursor position into a world position, taking into account any transforms applied
-// the camera.
-pub fn cursor_pos_in_world(
-    windows: &Windows,
-    cursor_pos: Vec2,
-    cam_t: &Transform,
-    cam: &Camera,
-) -> Vec3 {
-    let window = windows.primary();
-
-    let window_size = Vec2::new(window.width(), window.height());
-
-    // Convert screen position [0..resolution] to ndc [-1..1]
-    // (ndc = normalized device coordinates)
-    let ndc_to_world = cam_t.compute_matrix() * cam.projection_matrix().inverse();
-    let ndc = (cursor_pos / window_size) * 2.0 - Vec2::ONE;
-    ndc_to_world.project_point3(ndc.extend(0.0))
-}
-
-// We need to keep the cursor position updated based on any `CursorMoved` events.
-pub fn update_cursor_pos(
-    windows: Res<Windows>,
-    camera_q: Query<(&Transform, &Camera)>,
-    mut cursor_moved_events: EventReader<CursorMoved>,
-    mut cursor_pos: ResMut<CursorPos>,
-) {
-    for cursor_moved in cursor_moved_events.iter() {
-        // To get the mouse's world position, we have to transform its window position by
-        // any transforms on the camera. This is done by projecting the cursor position into
-        // camera space (world space).
-        for (cam_t, cam) in camera_q.iter() {
-            *cursor_pos = CursorPos(cursor_pos_in_world(
-                &windows,
-                cursor_moved.position,
-                cam_t,
-                cam,
-            ));
-        }
     }
 }
