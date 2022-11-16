@@ -37,8 +37,12 @@ pub fn find_path(
             TilePos::from_world_pos(&mouse_pos, map_size, grid_size, tilemap_type)
         {
             let goal = TilePos { x: 4, y: 6 };
-            let result =
-                find_path_in_tilemap(&tile_pos, &goal, tile_storage, tilemap_type, tile_query);
+            let result = astar(
+                &tile_pos,
+                |tile| tile.successors(tile_storage, tilemap_type, &tile_query),
+                |p| p.distance(&goal),
+                |p| *p == goal,
+            );
 
             if let Some((path, _)) = result {
                 show_path_debug(path, grid_size, tilemap_type, map_size, tile_size, lines)
@@ -46,35 +50,43 @@ pub fn find_path(
         };
     }
 }
-// TODO: Impl successor on TilePos if possible, otherwise impl seccessor on `MyTilePos`?
-pub fn find_path_in_tilemap(
-    from: &TilePos,
-    to: &TilePos,
-    tile_storage: &TileStorage,
-    tilemap_type: &TilemapType,
-    tile_query: Query<(&MovementCost, &TilePos)>,
-) -> Option<(Vec<TilePos>, i32)> {
-    astar(
-        from,
-        |tile| {
-            get_tile_neighbors(tile, tile_storage, tilemap_type)
-                .into_iter()
-                .map(|a| {
-                    if let Ok((cost, tile)) = tile_query.get(a) {
-                        Some((*tile, cost.0))
-                    } else {
-                        None
-                    }
-                })
-                .filter(|option| match option {
-                    Some((_, cost)) => *cost < 5,
-                    None => false,
-                })
-                .map(|option| option.unwrap())
-        },
-        |p| Vec2::from(p).distance(to.into()) as i32,
-        |p| p == to,
-    )
+pub trait Pathfinding {
+    fn distance(&self, other: &TilePos) -> i32;
+    fn successors(
+        &self,
+        tile_storage: &TileStorage,
+        tilemap_type: &TilemapType,
+        tile_query: &Query<(&MovementCost, &TilePos)>,
+    ) -> Vec<(TilePos, i32)>;
+}
+
+impl Pathfinding for TilePos {
+    fn distance(&self, other: &TilePos) -> i32 {
+        Vec2::from(self).distance(other.into()) as i32
+    }
+
+    fn successors(
+        &self,
+        tile_storage: &TileStorage,
+        tilemap_type: &TilemapType,
+        tile_query: &Query<(&MovementCost, &TilePos)>,
+    ) -> Vec<(TilePos, i32)> {
+        get_tile_neighbors(self, tile_storage, tilemap_type)
+            .into_iter()
+            .map(|a| {
+                if let Ok((cost, tile)) = tile_query.get(a) {
+                    Some((*tile, cost.0))
+                } else {
+                    None
+                }
+            })
+            .filter(|option| match option {
+                Some((_, cost)) => *cost < 5,
+                None => false,
+            })
+            .map(|option| option.unwrap())
+            .collect()
+    }
 }
 
 pub fn show_path_debug(
