@@ -1,12 +1,15 @@
-use crate::{components::GameState, prelude::*};
+use crate::prelude::*;
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(movement.run_in_state(GameState::Playing));
+        app.add_startup_system(spawn_camera)
+            .add_system(movement.run_in_state(GameState::Playing));
     }
 }
-
+fn spawn_camera(mut commands: Commands) {
+    commands.spawn_bundle(Camera2dBundle::default());
+}
 // A simple camera system for moving and zooming the camera.
 fn movement(
     time: Res<Time>,

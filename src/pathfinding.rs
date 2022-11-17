@@ -1,14 +1,6 @@
 use crate::{prelude::*, terrain::MovementCost};
 use pathfinding::prelude::astar;
 
-pub struct PathfindingPlugin;
-
-impl Plugin for PathfindingPlugin {
-    fn build(&self, app: &mut App) {
-        app;
-    }
-}
-
 pub trait Pathfinding {
     fn distance(&self, other: &TilePos) -> i32;
     fn successors(
@@ -39,8 +31,8 @@ impl Pathfinding for TilePos {
     ) -> Vec<(TilePos, i32)> {
         get_tile_neighbors(self, tile_storage, tilemap_type)
             .into_iter()
-            .map(|a| {
-                if let Ok((cost, tile)) = tile_query.get(a) {
+            .map(|entity| {
+                if let Ok((cost, tile)) = tile_query.get(entity) {
                     Some((*tile, cost.0))
                 } else {
                     None

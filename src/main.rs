@@ -1,11 +1,9 @@
 mod camera;
-mod components;
 mod cursor;
 mod loading;
 mod pathfinding;
 mod terrain;
 mod unit;
-mod worker;
 // #[cfg(debug_assertions)]
 // use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
@@ -17,6 +15,12 @@ mod prelude {
     pub use iyes_loopless::prelude::*;
     pub use iyes_progress::prelude::*;
     pub use rand::prelude::*;
+    #[derive(Clone, Eq, PartialEq, Debug, Hash)]
+    pub enum GameState {
+        AssetLoading,
+        WorldBuilding,
+        Playing,
+    }
 }
 
 use bevy_inspector_egui::WorldInspectorPlugin;
@@ -24,7 +28,7 @@ use prelude::*;
 
 fn main() {
     App::new()
-        .add_loopless_state(components::GameState::AssetLoading)
+        .add_loopless_state(GameState::AssetLoading)
         .add_plugins(DefaultPlugins)
         .add_plugin(DebugLinesPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
@@ -33,8 +37,6 @@ fn main() {
         .add_plugin(unit::UnitPlugin)
         .add_plugin(camera::CameraPlugin)
         .add_plugin(terrain::TerrainPlugin)
-        .add_plugin(pathfinding::PathfindingPlugin)
-        .add_plugin(worker::WorkerPlugin)
         .run();
 
     // #[cfg(debug_assertions)]

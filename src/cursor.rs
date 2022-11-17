@@ -1,4 +1,4 @@
-use crate::{components::GameState, prelude::*};
+use crate::prelude::*;
 
 pub struct CursorPlugin;
 
