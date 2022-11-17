@@ -1,7 +1,6 @@
 mod camera;
 mod cursor;
 mod loading;
-mod pathfinding;
 mod terrain;
 mod unit;
 // #[cfg(debug_assertions)]
@@ -23,6 +22,7 @@ mod prelude {
     }
 }
 
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy_inspector_egui::WorldInspectorPlugin;
 use prelude::*;
 
@@ -30,6 +30,8 @@ fn main() {
     App::new()
         .add_loopless_state(GameState::AssetLoading)
         .add_plugins(DefaultPlugins)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(DebugLinesPlugin::default())
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(loading::LoadingPlugin)

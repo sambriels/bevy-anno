@@ -2,9 +2,8 @@ use bevy::math::Vec3Swizzles;
 
 use crate::{
     loading::TextureAssets,
-    pathfinding::Pathfinding,
     prelude::*,
-    terrain::{CurrentTile, MovementCost, TileWorldPosition},
+    terrain::{CurrentTile, MovementCost, Pathfinding, TileWorldPosition},
 };
 
 pub struct UnitPlugin;
@@ -81,8 +80,8 @@ fn spawn_on_click(
 
 fn move_unit(
     mut commands: Commands,
-    time: Res<Time>,
     mut units_q: Query<(Entity, &mut Transform, &mut TargetLocation)>,
+    time: Res<Time>,
 ) {
     for (entity, mut transform, mut target_location) in &mut units_q {
         match target_location.waypoints.last() {

@@ -1,6 +1,7 @@
 use crate::{cursor::CursorPosition, loading::TextureAssets, prelude::*};
-use bevy::math::Vec4Swizzles;
+use bevy::math::Vec3Swizzles;
 use bevy_ecs_tilemap::prelude::*;
+use pathfinding::prelude::astar;
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
@@ -13,7 +14,7 @@ impl Plugin for TerrainPlugin {
             .add_system(update_current_tile.run_in_state(GameState::Playing));
     }
 }
-
+// TODO: this is not really well thought out, update this once I have more knowledge of what it should be
 #[derive(Component, Default)]
 pub struct Terrain {
     pub size: TilemapSize,
@@ -24,9 +25,8 @@ pub struct Terrain {
 
 impl Terrain {
     pub fn new(size: UVec2, tile_size: Vec2) -> Self {
-        let size = TilemapSize::from(size);
         Self {
-            size,
+            size: TilemapSize::from(size),
             map_type: TilemapType::square(false),
             tile_size: TilemapTileSize::from(tile_size),
             grid_size: TilemapGridSize::from(tile_size),
@@ -116,16 +116,14 @@ fn update_current_tile(
     mut current_tile: ResMut<CurrentTile>,
 ) {
     if cursor_position.is_changed() {
-        let (map_size, grid_size, map_transform, tilemap_type) = tilemap_query.single();
+        let (map_size, grid_size, map_transform, map_type) = tilemap_query.single();
 
-        let cursor_in_map_pos: Vec2 = {
-            // Extend the cursor_pos vec3 by 1.0
-            let cursor_pos = Vec4::from((cursor_position.world, 1.0));
-            let cursor_in_map_pos = map_transform.compute_matrix().inverse() * cursor_pos;
-            cursor_in_map_pos.xy()
-        };
-        let current_hover =
-            TilePos::from_world_pos(&cursor_in_map_pos, map_size, grid_size, tilemap_type);
+        let current_hover = TilePos::from_world_pos(
+            &(cursor_position.world - map_transform.translation).xy(),
+            map_size,
+            grid_size,
+            map_type,
+        );
 
         match (current_tile.hovered, current_hover) {
             (Some(a), Some(b)) if a == b => {}
@@ -133,5 +131,66 @@ fn update_current_tile(
                 current_tile.hovered = current_hover;
             }
         }
+    }
+}
+
+pub trait Pathfinding {
+    fn distance(&self, other: &TilePos) -> i32;
+    fn successors(
+        &self,
+        tile_storage: &TileStorage,
+        tilemap_type: &TilemapType,
+        tile_query: &Query<(&MovementCost, &TilePos)>,
+    ) -> Vec<(TilePos, i32)>;
+    fn find_path_to(
+        &self,
+        to: &TilePos,
+        tile_storage: &TileStorage,
+        tilemap_type: &TilemapType,
+        tile_query: &Query<(&MovementCost, &TilePos)>,
+    ) -> Option<(Vec<TilePos>, i32)>;
+}
+
+impl Pathfinding for TilePos {
+    fn distance(&self, other: &TilePos) -> i32 {
+        Vec2::from(self).distance(other.into()) as i32
+    }
+
+    fn successors(
+        &self,
+        tile_storage: &TileStorage,
+        tilemap_type: &TilemapType,
+        tile_query: &Query<(&MovementCost, &TilePos)>,
+    ) -> Vec<(TilePos, i32)> {
+        get_tile_neighbors(self, tile_storage, tilemap_type)
+            .into_iter()
+            .map(|entity| {
+                if let Ok((cost, tile)) = tile_query.get(entity) {
+                    Some((*tile, cost.0))
+                } else {
+                    None
+                }
+            })
+            .filter(|option| match option {
+                Some((_, cost)) => *cost < 5,
+                None => false,
+            })
+            .map(|option| option.unwrap())
+            .collect()
+    }
+
+    fn find_path_to(
+        &self,
+        to: &TilePos,
+        tile_storage: &TileStorage,
+        tilemap_type: &TilemapType,
+        tile_query: &Query<(&MovementCost, &TilePos)>,
+    ) -> Option<(Vec<TilePos>, i32)> {
+        astar(
+            self,
+            |tile| tile.successors(tile_storage, tilemap_type, tile_query),
+            |p| p.distance(to),
+            |p| *p == *to,
+        )
     }
 }
